@@ -36,22 +36,29 @@ int size[2];
 unsigned char proc_img[DIM][DIM];
 {
     printf("(size[0],size[1]): (%d,%d)\n",size[0],size[1]);
+    printf("(roi.x,roi.y): (%d,%d)\n",roi.x,roi.y);
     printf("roi.height: %d\n", roi.height);
     printf("roi.width: %d\n", roi.width);
     // ----------------------------------------type casting char to float------------------
     // float f_image[DIM][DIM];   
     for (int i = 0; i < size[0]; i++) {
         for (int j = 0; j < size[1]; j++) {
-            f_image[i][j]=(float)image[i][j];
+            f_image[i][j]=(float)image[i][j]; // m by n image => (m,n)=(X,Y)=(row,col) in image
         }
     }
 
-    // since the image array received from image is in the form image[m][n] instead of image[n][m]
-    // transpose the template to match template components to corresponding elements in image array for normalization
+    // // fill template with image region selected
+    // for(int i=0; i<roi.height; i++){
+    //     for(int j=0; j<roi.width; j++){
+    //         template[roi.x+i][roi.y+j]=f_image[roi.x+i][roi.y+j];
+    //     }
+    // }
+
     // fill template with image region selected
-    for(int i=0; i<roi.height; i++){
-        for(int j=0; j<roi.width; j++){
-            template[roi.x+i][roi.y+j]=f_image[roi.y+j][roi.x+i]/(roi.height*roi.width);
+    for(int i=0; i<roi.width; i++){
+        for(int j=0; j<roi.height; j++){
+             template[roi.x+i][roi.y+j]=f_image[roi.x+i][roi.y+j]; // l by k template => (l,k)=(X,Y)=(row,col) in template
+            // template[roi.y+j][roi.x+i]=f_image[roi.x+i][roi.y+j];
         }
     }
 
@@ -59,12 +66,13 @@ unsigned char proc_img[DIM][DIM];
     // calculate average of template
     float avg_template;
     float sum=0;
-    for(int i=0; i<roi.height; i++){
-        for(int j=0; j<roi.width; j++){
-            sum = sum + template[roi.x+i][roi.y+j];
+    for(int i=0; i<roi.width; i++){
+        for(int j=0; j<roi.height; j++){
+            sum = sum + template[roi.x+i][roi.y+j]; // l by k template => (l,k)=(X,Y)=(row,col) in template
         }
     }
-    avg_template = sum/(roi.height*roi.width); // k*l size template
+    avg_template = sum/((float)roi.height*(float)roi.width); // l*k size template
+    printf("template dimension: %d x %d = %f\n",roi.height,roi.width,((float)roi.height*(float)roi.width));
     printf("average of the template: %f\n", avg_template);
 
     //----------------------------------calculate average of image------------------------
@@ -79,20 +87,21 @@ unsigned char proc_img[DIM][DIM];
     avg_f_image = total/(size[0]*size[1]); // m*n size image
     printf("average of the image: %f\n", avg_f_image);
 
-
-    // compute convolution and normalize: h(x,y) = Σ(i=-k to k)Σ(j=-l to l) ((image(x+i,y+j)-imgavg)*(template(i+k,j+l)-templateavg))
+    // compute convolution:and normalize h(x,y) = Σ(i=-k to k)Σ(j=-l to l) ((image(x+i,y+j)-imgavg)*(template(i+k,j+l)-templateavg))
     // iterate through all locations of image where template can be placed and fill the remaining locations with neighbour's value
-    // the template can be placed to (m-(k-1))*(n-(l-1)) locations for [m x n-image & 2k+1 x 2l+1-template]
-    // 2k+1 x 2l+1 template, 2k+1=roi.height rows, 2l+1=roi.width cols 
-    for(int x=1; x<=(size[0]-(((roi.height-1)/2)-1)); x++){      // k=(roi.height-1)/2; // 2k+1=roi.height rows
-        for(int y=1; y<=(size[1]-(((roi.width-1)/2)-1)); y++){  // l=(roi.width-1)/2; // 2l+1=roi.width cols
+    // the template can be placed to (m-(k/2))*(n-(l/2)) locations for [m x n-image & k x l-template]
+    // for this assignment, the template can be placed to (m-(l/2))*(n-(k/2)) locations for [n x m-image & k x l-template]
+    for(int x=((roi.width-1)/2); x<=(size[0]-(roi.width/2)); x++){ // (m-(l/2)) i.e (m,n) = (x,y) coordinates apparantly, also, (l, k) = (x,y) coordinates
+        for(int y=((roi.height-1)/2); y<=(size[1]-(roi.height/2)); y++){ // (n-(k/2)) i.e (m,n) = (x,y) coordinates apparantly, also, (l, k) = (x,y) coordinates
             h_image[x][y]=0;
             // iterate through all rows and cols of template region and sum them up
-            // here convolution is k*l expensive i.e ((roi.height-1)/2) * ((roi.width-1)/2)
-            for (int i=-((roi.height-1)/2); i<=((roi.height-1)/2); i++){
-                for(int j=-((roi.width-1)/2); j<=((roi.width-1)/2); j++){
-                    // h(x,y) = Σ(i=-k to k)Σ(j=-l to l) ((image(x+i,y+j)-iavg)*template(i+k,j+l))
-                    h_image[x][y] = (f_image[x+i][y+j]-avg_f_image)*(template[i+((roi.height-1)/2)][j+((roi.width-1)/2)]-avg_template) + h_image[x][y];
+            // here convolution is l*k expensive
+            for (int i=-((roi.width-1)/2); i<=((roi.width-1)/2); i++){
+                for(int j=-((roi.height-1)/2); j<=((roi.height-1)/2); j++){
+                    // h(x,y) = Σ(i=-k to k)Σ(j=-l to l) ((image(x+i,y+j)-iavg)*template(i+k,j+l)) // this function works when the image_array's (rows,cols) = (Y-components,X-components) i.e (m,n)
+
+                    // the image received for this assignment has the form: the image_array's (rows,cols) = (X-components,Y-components) i.e (m,n)
+                    h_image[x][y] = (f_image[x+i][y+j]-avg_f_image)*(1/((float)roi.height*(float)roi.width))*(template[roi.x + i + ((roi.width-1)/2)][roi.y + j + ((roi.height-1)/2)]-avg_template) + h_image[x][y]; // hence, in this case this function works
                 }
             }
         }
@@ -110,10 +119,10 @@ unsigned char proc_img[DIM][DIM];
             else if(y==0){
                 h_image[x][y]=h_image[x][y+1];
             }
-            else if(x==((size[0]-(((roi.height-1)/2)-1))+1)){
+            else if( x >=(size[0]-(roi.width/2)) ){ // (size[0]-(roi.width/2)
                 h_image[x][y]=h_image[x-1][y];
             }
-            else if(y==((size[1]-(((roi.width-1)/2)-1))+1)){
+            else if(y >=(size[1]-(roi.height/2))){ // (size[1]-(roi.height/2)
                 h_image[x][y]=h_image[x][y-1];
             }
         }
@@ -136,8 +145,8 @@ unsigned char proc_img[DIM][DIM];
 
     float SD_template;
     float var_template=0;
-    for (int i = 0; i < roi.height; i++) { // Σ(y=0 to m)
-        for (int j = 0; j < roi.width; j++) { // Σ(x=0 to n)
+    for (int i = 0; i < roi.width; i++) { // Σ(x=0 to l)
+        for (int j = 0; j < roi.height ; j++) { // Σ(y=0 to k)
             var_template = (template[roi.x+i][roi.y+j]-avg_template)*(template[roi.x+i][roi.y+j]-avg_template) + var_template;
         }
     }
@@ -153,8 +162,8 @@ unsigned char proc_img[DIM][DIM];
     }
 
     // find max and min from the processed result 
-    float max=-10000;
-    float min=10000;
+    float max=-100000;
+    float min=100000;
     for(int i=0; i<size[0]; i++){
         for(int j=0; j<size[1]; j++){
             if(h_image[i][j]>max){
@@ -182,7 +191,7 @@ unsigned char proc_img[DIM][DIM];
         }
     }
 
-    // printf("template: (%d,%d)\n",roi.x,roi.y);
+    printf("corner selected: (%d,%d)\n",roi.x,roi.y);
 
     // i_image[roi.x-1][roi.y]=255;
     // i_image[roi.x][roi.y-1]=255;
@@ -191,7 +200,7 @@ unsigned char proc_img[DIM][DIM];
     // i_image[roi.x-1][roi.y-1]=255;
     // i_image[roi.x+1][roi.y+1]=255;
     // i_image[roi.x][roi.y]=255;
-    // printf("image:    %d\n",i_image[roi.x][roi.y]);
+    // printf("corner selected:    %d\n",(int)f_image[roi.x][roi.y]);
 
     // ----------------------------------------type casting int to char------------------
     // unsigned char proc_img[DIM][DIM];
