@@ -10,7 +10,7 @@ Process image: click "process" to see the image result.<br><br>
 ![image](https://user-images.githubusercontent.com/70733761/143072509-60f24e47-3655-4bd0-a8c0-d451d3bf9c88.png)  <br><br>
 
 ### Processed image results: <br><br>
-![image](https://user-images.githubusercontent.com/70733761/143076507-f77a21d9-c2c7-4e85-bf06-c58dfe9cf320.png)<br><br>
+![image](https://user-images.githubusercontent.com/70733761/143077173-d2bb6db6-f819-4703-9a7f-23f82ebdabda.png)<br><br>
 ![image](https://user-images.githubusercontent.com/70733761/143076529-0086bef8-7c84-45bc-9020-c90cc69e393c.png)<br><br>
 ![image](https://user-images.githubusercontent.com/70733761/143076546-5289cf1a-1693-4f8f-b7ce-31df0ab36501.png)<br><br>
 ![image](https://user-images.githubusercontent.com/70733761/143076561-8c453e6a-37bc-4655-8a85-d23a1f8c293b.png)<br><br>
