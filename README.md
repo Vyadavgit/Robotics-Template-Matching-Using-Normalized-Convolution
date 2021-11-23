@@ -2,7 +2,7 @@
 
 ### Instructions: <br>
 Load image: click "load" and type "pictures/IMAGENAME.lpr" <br>
-Drag and select the template region for template matching <br>
+Select template: "Drag and select the template region for template matching <br>
 Process image: click "process" to see the image result.<br><br>
 
 ### Original images: <br><br>
